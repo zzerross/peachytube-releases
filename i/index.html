@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Open in PeachyTube</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root { --bg: #fff8f3; --fg: #2b2622; --muted: #6f655d; --peach: #f08a6c; --mint: #bfe6d3; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #121317; --fg: #eceaf0; --muted: #9c9aa8; --peach: #f58bb8; --mint: #213c42; } }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, sans-serif; }
+  main { max-width: 480px; margin: 0 auto; padding: 48px 20px; text-align: center; }
+  h1 { font-size: 22px; margin: 8px 0 4px; }
+  p { color: var(--muted); margin: 8px 0; }
+  .song { font-weight: 600; color: var(--fg); word-break: break-word; }
+  a.btn { display: block; margin: 24px 0 12px; padding: 16px; border-radius: 28px; background: var(--peach);
+          color: #fff; text-decoration: none; font-weight: 600; font-size: 18px; }
+  a.alt { display: block; padding: 12px; border-radius: 24px; background: var(--mint); color: var(--fg); text-decoration: none; }
+  small { display: block; margin-top: 28px; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <img src="../icon.png" alt="" width="88" height="88">
+  <h1>Separated instruments for PeachyTube</h1>
+  <p class="song" id="song"></p>
+  <a class="btn" id="open" href="#">Open in PeachyTube</a>
+  <p id="hint">PeachyTube opens by itself. If it doesn't, tap the button.</p>
+  <a class="alt" href="../">Don't have PeachyTube yet? Download it (Android)</a>
+  <small>Opened inside a messenger and nothing happens? Open this page in Chrome (⋮ → Open in browser) and tap the button again.
+  After the import you can close this page.</small>
+</main>
+<script>
+  var q = new URLSearchParams(location.search);
+  var d = (q.get('d') || '').replace(/[^A-Za-z0-9_-]/g, '');
+  var t = q.get('t') || '';
+  document.getElementById('song').textContent = t;
+  var query = 'd=' + encodeURIComponent(d) + '&t=' + encodeURIComponent(t);
+  var direct = 'peachytube://import?' + query;
+  var intent = 'intent://import?' + query + '#Intent;scheme=peachytube;package=io.github.zzerross.peachytube;end';
+  var btn = document.getElementById('open');
+  btn.href = /Android/i.test(navigator.userAgent) ? intent : direct;
+  if (!d) {
+    btn.textContent = 'This link is incomplete';
+    btn.removeAttribute('href');
+    document.getElementById('hint').textContent = '';
+  } else if (/Android/i.test(navigator.userAgent) && !sessionStorage.getItem('opened-' + d)) {
+    // Open the app right away (once per page: coming back here doesn't reopen it).
+    try { sessionStorage.setItem('opened-' + d, '1'); } catch (e) {}
+    setTimeout(function () { location.href = btn.href; }, 300);
+  }
+</script>
+</body>
+</html>
