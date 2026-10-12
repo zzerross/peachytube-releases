@@ -1,42 +1,28 @@
-# Builds PeachyTube from its private source repo and publishes the APK here (public repo:
-# Actions minutes are free). Checks every 30 minutes for a new commit on the source's main;
-# "Run workflow" builds now (force: even when nothing changed).
-#
-# Nothing of the source is published but the APK and the install site: the build's output is
-# kept off the log (a failure shows only the compiler's error lines), no artifacts are uploaded,
-# and it never runs for pull requests. SOURCE_TOKEN: fine-grained, zzerross/peachytube,
-# Contents read (source) and write (download-stats branch).
+# Builds PeachyTube from its private source (the steps: tools/ci/public-build.sh there).
 name: Build from source
-
 on:
   schedule:
     - cron: "*/30 * * * *"
   workflow_dispatch:
     inputs:
       force:
-        description: Build even if the source has no new commit
         type: boolean
         default: false
-
-concurrency:
-  group: build
-  cancel-in-progress: false
-
+concurrency: build
 permissions:
   contents: write
-
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      SRC: zzerross/peachytube
-      GH_TOKEN: ${{ github.token }}
-      SOURCE_TOKEN: ${{ secrets.SOURCE_TOKEN }}
     steps:
-      - name: Anything new?
-        id: check
-        run: |
-          set -euo pipefail
-          head="$(git ls-remote "https://x-access-token:${SOURCE_TOKEN}@github.com/${SRC}.git" refs/heads/main | cut -c1-7)"
-          [ -n "$head" ] || { echo "::error::can't read the source (SOURCE_TOKEN?)"; exit 1; }
-          rel="$(gh api "repos/${{ github.repository }}/releases/tags/latest" 2>/dev/null || echo '{}')"
+      - uses: actions/checkout@v4
+        with:
+          repository: zzerross/peachytube
+          token: ${{ secrets.SOURCE_TOKEN }}
+          path: src
+      - run: bash src/tools/ci/public-build.sh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_TOKEN: ${{ secrets.SOURCE_TOKEN }}
+          PUB: ${{ github.repository }}
+          FORCE: ${{ inputs.force }}
